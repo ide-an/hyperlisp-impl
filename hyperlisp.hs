@@ -97,18 +97,29 @@ point x q
 p_toplevel :: CharParser() Sexp
 p_toplevel = p_form
 p_form = 
+  try(
   do char '('
      left <- p_form
      char '.'
      right <- p_form
      char ')'
-     return $ Cons left right
- <|> do char '['
+     return $ Cons left right)
+ <|> do char '('
+        lst <- sepBy p_form spaces
+        char ')'
+        return $ foldr Cons Zero lst
+ <|> 
+ try(
+     do char '['
         left <- p_form
         char '.'
         right <- p_form
         char ']'
-        return $ Snoc left right
+        return $ Snoc left right)
+ <|> do char '['
+        lst <- sepBy p_form spaces
+        char ']'
+        return $ foldr Snoc Zero lst
  <|> (char '0' >> return Zero)
  <|> (char '1' >> return One)
  <|> p_literal
